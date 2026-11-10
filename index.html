@@ -149,7 +149,7 @@
   @media (orientation: portrait) { .rotate { display: block; } }
 
   .card {
-    width: min(92vw, 820px); padding: clamp(16px, 4vmin, 40px) clamp(16px, 4.5vmin, 48px);
+    width: min(94vw, 900px); padding: clamp(16px, 4vmin, 40px) clamp(16px, 4.5vmin, 48px);
     background: rgba(6, 9, 24, .8); border: 1px solid rgba(255, 214, 10, .35); border-radius: clamp(18px, 4vmin, 36px);
     box-shadow: 0 0 70px rgba(255, 196, 0, .16), 0 20px 60px rgba(0, 0, 0, .6);
     transform: scale(.92); transition: transform .5s cubic-bezier(.2, .9, .3, 1.25);
@@ -175,7 +175,34 @@
   .bill b { color: #ff8fa3; font-weight: 900; }
   .bill b.cost { color: var(--g); white-space: nowrap; text-shadow: 0 0 16px rgba(255, 214, 10, .45); }
   .bill small { display: block; margin-top: .25em; font-size: .62em; font-weight: 600; color: #c7a5ad; }
-  .card .big { margin-top: clamp(12px, 3vmin, 28px); }
+  .actions {
+    display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center;
+    gap: clamp(10px, 2.2vmin, 22px); margin-top: clamp(12px, 3vmin, 28px);
+  }
+  .actions .big { font-size: clamp(16px, 3vmin, 31px); padding: .8em 1.2em; }
+  .big.pay {
+    color: #fff; background: linear-gradient(180deg, #ff8fa3 0%, #ff3b5c 50%, #d81b45 100%);
+    box-shadow: 0 0 0 4px rgba(255, 59, 92, .22), 0 0 34px rgba(255, 59, 92, .4), inset 0 -4px 0 rgba(110, 0, 30, .4);
+    animation: none;
+  }
+  .big .eur { font-size: 1.15em; line-height: 0; }
+
+  /* the joke that pops up after "pay" */
+  #joke { z-index: 4; padding: 4vmin; background: rgba(3, 4, 10, .9); cursor: pointer; }
+  #joke.show { pointer-events: auto; }
+  .face {
+    width: clamp(120px, 36vmin, 300px); height: clamp(120px, 36vmin, 300px); flex: none;
+    filter: drop-shadow(0 0 40px rgba(255, 200, 10, .55)); transform: scale(0);
+  }
+  #joke.show .face { animation: pop .5s cubic-bezier(.2, .9, .3, 1.5) forwards, laugh .5s ease-in-out .5s infinite; }
+  @keyframes pop { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+  @keyframes laugh { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-7%) rotate(5deg); } }
+  .haha {
+    margin-top: clamp(14px, 4vmin, 40px); max-width: 16em;
+    font-size: clamp(22px, 5.6vmin, 54px); font-weight: 900; line-height: 1.2;
+    color: #fff3b0; text-shadow: 0 0 26px rgba(255, 196, 0, .6);
+  }
+  .tap { margin-top: 1.2em; font-size: clamp(12px, 2.2vmin, 19px); color: #93a0be; }
   @media (max-height: 520px) { .note, .bill small { display: none; } .card { padding-top: 12px; padding-bottom: 12px; } }
   @media (max-height: 420px) {   /* very low screens (a phone held sideways): compact result card */
     #result { padding: 58px 2vw 6px; }
@@ -184,14 +211,18 @@
     .line { font-size: 16px; line-height: 1.25; }
     .explain, .bill { font-size: 13px; max-width: none; margin-top: 6px; }
     .bill { padding: .35em .8em; }
-    .card .big { margin-top: 8px; font-size: 16px; padding: .6em 1.2em; }
+    .actions { margin-top: 8px; gap: 8px; }
+    .actions .big { font-size: 15px; padding: .6em 1.1em; }
   }
   @media (max-width: 900px) { #hud { font-size: clamp(13px, 2.1vw, 20px); gap: clamp(10px, 1.8vw, 20px); padding: 8px 16px; } }
   @media (max-width: 640px) {
     #hud { gap: 12px; padding: 7px 12px; }
     .stat .lbl { display: none; }
   }
-  @media (prefers-reduced-motion: reduce) { .big { animation: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .big { animation: none; }
+    #joke.show .face { animation: none; transform: none; }
+  }
 </style>
 </head>
 <body>
@@ -262,11 +293,29 @@
     <p class="note">Tai supaprastintas modelis. Tikrų gama fotonų akimis nematome – blyksnis, garsas ir geltoni spinduliai čia tik padeda įsivaizduoti, kas vyksta.</p>
     <p class="bill">Sunaudojai <b id="rUsed">25 antimaterijos daleles</b>, todėl tau reikia sumokėti <b class="cost" id="rCost">25 000 eurų</b>!
       <small>1 antimaterijos dalelė kainuoja 1000 eurų.</small></p>
-    <button class="big" id="btnAgain" type="button">
-      <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5v4.2h-4.2"/></svg>
-      PAKARTOTI EKSPERIMENTĄ
-    </button>
+    <div class="actions">
+      <button class="big" id="btnAgain" type="button">
+        <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5v4.2h-4.2"/></svg>
+        PAKARTOTI EKSPERIMENTĄ
+      </button>
+      <button class="big pay" id="btnPay" type="button"><span class="eur" aria-hidden="true">€</span>SUMOKĖTI</button>
+    </div>
   </div>
+</section>
+
+<section class="screen" id="joke" role="dialog" aria-live="assertive" aria-label="Pokštas">
+  <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+    <defs><radialGradient id="faceFill" cx="40%" cy="32%" r="75%">
+      <stop offset="0" stop-color="#fff9a8"/><stop offset=".55" stop-color="#ffd60a"/><stop offset="1" stop-color="#ff9f0a"/>
+    </radialGradient></defs>
+    <circle cx="60" cy="60" r="55" fill="url(#faceFill)" stroke="#7a3c00" stroke-width="3"/>
+    <path d="M27 50q11-17 22 0M71 50q11-17 22 0" fill="none" stroke="#3b1700" stroke-width="6" stroke-linecap="round"/>
+    <path d="M26 64Q60 72 94 64Q91 104 60 104Q29 104 26 64Z" fill="#4a1500" stroke="#3b1700" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M33 68.5Q60 75 87 68.5L85.500 77Q60 82 34.500 77Z" fill="#fff"/>
+    <ellipse cx="60" cy="95" rx="15" ry="6.5" fill="#ff5c7a"/>
+  </svg>
+  <p class="haha">Haha, tu pats gamini antimateriją!</p>
+  <p class="tap">Bakstelėk ekraną, kad uždarytum</p>
 </section>
 
 <script>
@@ -392,6 +441,15 @@
         this.tone(this.master, 'sine', f, f, t + i * 0.13, 0.7, 0.14);
         this.tone(this.master, 'triangle', f * 2, f * 2, t + i * 0.13, 0.35, 0.03);
       });
+    },
+    haha() {                                          // "ha-ha-ha-ha-ha", sliding down
+      const ac = this.ctx;
+      if (!ac || !this.enabled) return;
+      const t = ac.currentTime + 0.25;
+      for (let i = 0; i < 5; i++) {
+        const f = 640 - i * 48;
+        this.tone(this.master, 'triangle', f * 1.3, f, t + i * 0.14, 0.12, 0.17);
+      }
     },
   };
 
@@ -850,7 +908,14 @@
     seedIntro();
     document.body.classList.remove('live');
     $('result').classList.remove('show');
+    $('joke').classList.remove('show');
     $('intro').classList.add('show');
+  }
+
+  // "Pay" is a joke: nobody has to pay for antimatter they make themselves.
+  function pay() {
+    Sound.init(); Sound.resume(); Sound.haha();
+    $('joke').classList.add('show');
   }
 
   // ---- amount pickers: tap to change by 5, hold to keep going
@@ -938,6 +1003,8 @@
   }
   $('btnStart').addEventListener('click', start);
   $('btnAgain').addEventListener('click', toIntro);
+  $('btnPay').addEventListener('click', pay);
+  $('joke').addEventListener('click', () => $('joke').classList.remove('show'));
 
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 150));

@@ -17,7 +17,8 @@ išlekiantys tiksliai priešingomis kryptimis. Viršuje esantys skaitikliai rodo
 
 Pabaigoje parodoma, kiek įvyko anihiliacijų, kiek dalelių liko be poros (jei kiekiai buvo nelygūs) ir
 „sąskaita“: viena sunaudota antimaterijos dalelė kainuoja 1000 eurų. **PAKARTOTI EKSPERIMENTĄ** grąžina į
-pradinį ekraną, kur kiekius galima pakeisti.
+pradinį ekraną, kur kiekius galima pakeisti. Mygtukas **SUMOKĖTI** yra pokštas: iššoka besijuokiantis veidukas
+ir užrašas „Haha, tu pats gamini antimateriją!“ (uždaromas bakstelėjus ekraną).
 
 ## Kaip paleisti
 
