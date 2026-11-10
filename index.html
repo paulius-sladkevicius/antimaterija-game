@@ -51,7 +51,7 @@
   .stat { display: flex; align-items: center; gap: .4em; }
   .stat .lbl { opacity: .86; font-weight: 600; }
   .stat b {
-    display: inline-block; min-width: 1.5em; text-align: left;
+    display: inline-block; min-width: 1.8em; text-align: left;
     font-size: 1.22em; font-weight: 800; font-variant-numeric: tabular-nums;
   }
   .stat b.bump { animation: bump .35s ease-out; }
@@ -87,9 +87,9 @@
     transition: opacity .45s ease, visibility 0s linear .45s;
   }
   .screen.show { opacity: 1; visibility: visible; transition: opacity .45s ease; }
-  .screen.show .big { pointer-events: auto; }
+  .screen.show .big, .screen.show .step { pointer-events: auto; }
 
-  h1 { line-height: 1; margin-bottom: clamp(18px, 5vmin, 48px); }
+  h1 { line-height: 1; margin-bottom: clamp(14px, 3.8vmin, 38px); }
   h1 span {
     display: block; font-size: clamp(30px, 10vmin, 104px); font-weight: 900; letter-spacing: .07em;
     background: linear-gradient(90deg, var(--e) 5%, #ffffff 50%, var(--p) 95%);
@@ -116,6 +116,28 @@
     0%, 100% { box-shadow: 0 0 0 4px rgba(255, 214, 10, .22), 0 0 34px rgba(255, 190, 10, .4), inset 0 -4px 0 rgba(140, 70, 0, .35); }
     50%      { box-shadow: 0 0 0 9px rgba(255, 214, 10, .12), 0 0 60px rgba(255, 190, 10, .62), inset 0 -4px 0 rgba(140, 70, 0, .35); }
   }
+  /* amount pickers on the start screen */
+  .amounts { display: flex; justify-content: center; gap: clamp(18px, 6vw, 80px); margin-bottom: clamp(16px, 3.8vmin, 36px); }
+  .amt.e { color: #6fcbff; } .amt.p { color: #ff7088; }
+  .amt-l {
+    display: flex; align-items: center; justify-content: center; gap: .5em; margin-bottom: .4em;
+    font-size: clamp(14px, 2.6vmin, 24px); font-weight: 700; color: #cfe0ff;
+  }
+  .amt-c { display: flex; align-items: center; justify-content: center; gap: clamp(4px, 1.2vmin, 12px); }
+  .amt output {
+    min-width: 2.1em; font-size: clamp(28px, 6vmin, 56px); font-weight: 900; line-height: 1;
+    font-variant-numeric: tabular-nums; text-shadow: 0 0 22px currentColor;
+  }
+  .step {
+    width: clamp(46px, 7.6vmin, 64px); height: clamp(46px, 7.6vmin, 64px); border-radius: 50%; flex: none;
+    display: grid; place-items: center; cursor: pointer; touch-action: manipulation;
+    color: inherit; background: rgba(8, 12, 30, .7); border: 2px solid currentColor;
+    transition: transform .1s, opacity .2s;
+  }
+  .step svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; }
+  .step:active { transform: scale(.86); }
+  .step:disabled { opacity: .28; cursor: default; }
+
   .q { margin-top: clamp(16px, 3.6vmin, 34px); font-size: clamp(16px, 3.1vmin, 30px); font-weight: 600; color: #cfe0ff; max-width: 30em; }
   .legend {
     list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: .5em 1.8em;
@@ -140,10 +162,30 @@
   .line { font-size: clamp(18px, 4.3vmin, 40px); font-weight: 800; line-height: 1.4; }
   .line .e { color: #6fcbff; } .line .p { color: #ff7088; }
   .line.a { color: #ffffff; } .line.g { color: var(--g); text-shadow: 0 0 18px rgba(255, 214, 10, .45); }
-  .explain { margin: .9em auto 0; max-width: 27em; font-size: clamp(15px, 2.9vmin, 26px); font-weight: 600; line-height: 1.35; color: #d7e4ff; }
+  .explain { margin: .7em auto 0; max-width: 27em; font-size: clamp(15px, 2.9vmin, 26px); font-weight: 600; line-height: 1.35; color: #d7e4ff; }
   .note { margin: .7em auto 0; max-width: 40em; font-size: clamp(11px, 1.9vmin, 16px); line-height: 1.35; color: #8e9bb9; }
-  .card .big { margin-top: clamp(14px, 3.6vmin, 34px); }
-  @media (max-height: 430px) { .note { display: none; } }
+  .left { margin-top: .3em; font-size: clamp(14px, 2.7vmin, 24px); font-weight: 700; color: #b7c4e2; }
+  .left[hidden] { display: none; }
+  /* the bill for the antimatter that was used up */
+  .bill {
+    margin: clamp(10px, 2.6vmin, 24px) auto 0; padding: .6em 1em; max-width: 30em;
+    font-size: clamp(15px, 2.9vmin, 26px); font-weight: 700; line-height: 1.35; color: #ffe1e6;
+    background: rgba(255, 59, 92, .11); border: 2px dashed rgba(255, 112, 136, .6); border-radius: clamp(12px, 2.4vmin, 20px);
+  }
+  .bill b { color: #ff8fa3; font-weight: 900; }
+  .bill b.cost { color: var(--g); white-space: nowrap; text-shadow: 0 0 16px rgba(255, 214, 10, .45); }
+  .bill small { display: block; margin-top: .25em; font-size: .62em; font-weight: 600; color: #c7a5ad; }
+  .card .big { margin-top: clamp(12px, 3vmin, 28px); }
+  @media (max-height: 520px) { .note, .bill small { display: none; } .card { padding-top: 12px; padding-bottom: 12px; } }
+  @media (max-height: 420px) {   /* very low screens (a phone held sideways): compact result card */
+    #result { padding: 58px 2vw 6px; }
+    .card { width: min(96vw, 900px); padding: 8px 14px; }
+    .card h2 { font-size: 20px; margin-bottom: .2em; }
+    .line { font-size: 16px; line-height: 1.25; }
+    .explain, .bill { font-size: 13px; max-width: none; margin-top: 6px; }
+    .bill { padding: .35em .8em; }
+    .card .big { margin-top: 8px; font-size: 16px; padding: .6em 1.2em; }
+  }
   @media (max-width: 900px) { #hud { font-size: clamp(13px, 2.1vw, 20px); gap: clamp(10px, 1.8vw, 20px); padding: 8px 16px; } }
   @media (max-width: 640px) {
     #hud { gap: 12px; padding: 7px 12px; }
@@ -178,6 +220,24 @@
 
 <section class="screen show" id="intro">
   <h1><span>ANTIMATERIJA</span><small>DIDYSIS SUSIDŪRIMAS</small></h1>
+  <div class="amounts" role="group" aria-label="Dalelių kiekis">
+    <div class="amt e">
+      <div class="amt-l"><i class="dot e"></i>Materija</div>
+      <div class="amt-c">
+        <button class="step" type="button" data-kind="0" data-dir="-1" aria-label="Mažiau materijos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <output id="wE" aria-live="polite">25</output>
+        <button class="step" type="button" data-kind="0" data-dir="1" aria-label="Daugiau materijos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+    </div>
+    <div class="amt p">
+      <div class="amt-l"><i class="dot p"></i>Antimaterija</div>
+      <div class="amt-c">
+        <button class="step" type="button" data-kind="1" data-dir="-1" aria-label="Mažiau antimaterijos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <output id="wP" aria-live="polite">25</output>
+        <button class="step" type="button" data-kind="1" data-dir="1" aria-label="Daugiau antimaterijos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+      </div>
+    </div>
+  </div>
   <button class="big" id="btnStart" type="button">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5z"/></svg>
     PRADĖTI EKSPERIMENTĄ
@@ -197,8 +257,11 @@
     <p class="line"><span class="e" id="rE">25 elektronai</span> + <span class="p" id="rP">25 pozitronai</span></p>
     <p class="line a" id="rA">25 anihiliacijos</p>
     <p class="line g" id="rG">50 gama fotonų</p>
+    <p class="left" id="rLeft" hidden></p>
     <p class="explain">Susidūrus elektronui ir pozitronui, jų energija gali virsti dviem gama fotonais.</p>
     <p class="note">Tai supaprastintas modelis. Tikrų gama fotonų akimis nematome – blyksnis, garsas ir geltoni spinduliai čia tik padeda įsivaizduoti, kas vyksta.</p>
+    <p class="bill">Sunaudojai <b id="rUsed">25 antimaterijos daleles</b>, todėl tau reikia sumokėti <b class="cost" id="rCost">25 000 eurų</b>!
+      <small>1 antimaterijos dalelė kainuoja 1000 eurų.</small></p>
     <button class="big" id="btnAgain" type="button">
       <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5v4.2h-4.2"/></svg>
       PAKARTOTI EKSPERIMENTĄ
@@ -211,7 +274,9 @@
   'use strict';
 
   // ------------------------------------------------------------------ setup
-  const N = 25;                       // particles of each kind
+  const N_DEFAULT = 25;               // particles of each kind to begin with
+  const N_MIN = 5, N_MAX = 100, N_STEP = 5;
+  const PRICE = 1000;                 // euros for one antimatter particle
   const INTRO_N = 7;                  // particles drifting on each side of the start screen
   const INTRO_EDGE = 0.2;             // ...and the share of the screen width each side gets
   const TAU = Math.PI * 2;
@@ -230,6 +295,7 @@
   const ctx = cv.getContext('2d');
 
   let W = 0, H = 0, DPR = 1;
+  let SCALE = 1;                      // particles shrink when there are a lot of them
   let R = 10;                         // particle radius (css px)
   let SPEED = 120;                    // particle speed (css px / s)
   let PH_SPEED = 1500, PH_TAIL = 300; // photon speed and trail length
@@ -240,7 +306,9 @@
     t: 0,                             // simulation clock, seconds
     lastHit: 0,                       // time of the latest annihilation
     parts: [], photons: [], bursts: [], sparks: [], stars: [],
-    nE: N, nP: N, nA: 0,
+    want: [N_DEFAULT, N_DEFAULT],     // amounts picked on the start screen: [matter, antimatter]
+    n0: [N_DEFAULT, N_DEFAULT],       // amounts the running experiment started with
+    nE: N_DEFAULT, nP: N_DEFAULT, nA: 0,
   };
 
   // ------------------------------------------------------------------ sound
@@ -293,7 +361,7 @@
       const ac = this.ctx;
       if (!ac || !this.enabled || ac.state !== 'running') return;
       const t = ac.currentTime, gap = t - this.last;
-      if (gap < 0.045) return;                        // two hits in the same instant: one sound is enough
+      if (gap < 0.06) return;                         // two hits in the same instant: one sound is enough
       this.last = t;
       const vol = gap < 0.3 ? 0.55 : 1;               // quieter when reactions come in quick succession
       const f = rand(340, 640), dest = this.out(pan * 0.7);
@@ -365,7 +433,7 @@
     spr.spark = glow(R * 0.9, [[0, 'rgba(255,255,240,1)'], [0.35, 'rgba(255,220,90,.8)'], [1, 'rgba(255,170,0,0)']]);
 
     // "ANIHILIACIJA!" label, rendered once and then just scaled / faded
-    const fs = clamp(Math.min(W, H) * 0.04, 17, 34);
+    const fs = clamp(Math.min(W, H) * 0.04, 17, 34) * Math.max(0.72, SCALE);
     const font = `900 ${fs * DPR}px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
     const c = document.createElement('canvas'), g = c.getContext('2d');
     g.font = font;
@@ -425,17 +493,22 @@
     bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-    const unit = Math.min(W, H);
-    R = clamp(unit * 0.0155, 6, 14);
-    SPEED = clamp(unit * 0.16, 70, 180);
+    applySize();
     PH_SPEED = Math.max(W, H) * 1.45;
     PH_TAIL = Math.max(W, H) * 0.3;
 
     for (const p of S.parts) { p.x *= sx; p.y *= sy; p.trail.length = 0; setVelocity(p, Math.atan2(p.vy, p.vx)); }
     for (const list of [S.bursts, S.sparks]) for (const o of list) { o.x *= sx; o.y *= sy; }
     for (const ph of S.photons) { ph.x0 *= sx; ph.y0 *= sy; }
-    buildSprites();
     drawBackground();
+  }
+
+  // Particle size and speed for this screen and this many particles.
+  function applySize() {
+    const unit = Math.min(W, H);
+    R = Math.max(4.5, clamp(unit * 0.0155, 6, 14) * SCALE);
+    SPEED = clamp(unit * 0.16, 70, 180);
+    buildSprites();
   }
 
   // ------------------------------------------------------------------ particles
@@ -556,14 +629,18 @@
     S.lastHit = S.t;
     updateHud(true);
 
-    S.bursts.push({ x, y, t0: S.t, ax: a.x, ay: a.y, ak: a.kind, bx: b.x, by: b.y, bk: b.kind });
+    // when a lot happens at once, only some reactions get a label and the full set of sparks
+    let labels = 0;
+    for (const o of S.bursts) if (o.label) labels++;
+    const busy = S.bursts.length >= 6;
+    S.bursts.push({ x, y, t0: S.t, label: labels < 4, ax: a.x, ay: a.y, ak: a.kind, bx: b.x, by: b.y, bk: b.kind });
 
     // two photons, exactly back to back (total momentum is zero)
     const ang = rand(0, TAU), dx = Math.cos(ang), dy = Math.sin(ang);
     S.photons.push({ x0: x, y0: y, dx, dy, d: 0 }, { x0: x, y0: y, dx: -dx, dy: -dy, d: 0 });
 
     const u = Math.min(W, H) / 800;
-    for (let i = 0; i < 12; i++) {
+    for (let i = busy ? 6 : 12; i > 0; i--) {
       const sa = rand(0, TAU), sv = rand(110, 430) * u, life = rand(0.35, 0.7);
       S.sparks.push({ x, y, vx: Math.cos(sa) * sv, vy: Math.sin(sa) * sv, life, max: life, size: rand(0.7, 1.5) });
     }
@@ -617,12 +694,13 @@
 
     // particle trails (additive glow)
     ctx.globalCompositeOperation = 'lighter';
+    const thin = S.parts.length > 110 ? 2 : 1;      // big crowds: draw every other trail dot
     for (const p of S.parts) {
       const tr = p.trail, n = tr.length, img = spr.trail[p.kind];
       if (S.t < p.born) continue;
-      for (let i = 1; i < n; i++) {
+      for (let i = 1; i < n; i += thin) {
         const f = 1 - i / TRAIL_LEN;
-        put(img, tr[i].x, tr[i].y, R * (0.55 + 0.85 * f), 0.34 * f * f);
+        put(img, tr[i].x, tr[i].y, R * (0.55 + 0.85 * f), 0.34 * thin * f * f);
       }
     }
 
@@ -655,6 +733,7 @@
     }
 
     // annihilation: particles stop and vanish, flash + expanding ring
+    const calm = clamp(4 / S.bursts.length, 0.3, 1);   // many flashes at once: each one is dimmer
     for (const b of S.bursts) {
       const age = S.t - b.t0;
       if (age < 0.15) {
@@ -666,7 +745,7 @@
       }
       if (age < 0.42) {
         const p = age / 0.42;
-        put(spr.flash, b.x, b.y, R * (4 + 9 * easeOut(p)), 0.88 * Math.pow(1 - p, 1.4));
+        put(spr.flash, b.x, b.y, R * (4 + 9 * easeOut(p)), 0.88 * calm * Math.pow(1 - p, 1.4));
       }
       if (age < 0.62) {
         const p = age / 0.62, e = easeOut(p);
@@ -685,7 +764,7 @@
     ctx.globalCompositeOperation = 'source-over';
     for (const b of S.bursts) {
       const age = S.t - b.t0 - 0.06;
-      if (age <= 0) continue;
+      if (age <= 0 || !b.label) continue;
       const life = BURST_LIFE - 0.06, p = age / life;
       const alpha = Math.min(1, age / 0.08, (life - age) / 0.3);
       const sc = age < 0.2 ? 0.55 + 0.45 * easeBack(age / 0.2) : 1;
@@ -721,23 +800,22 @@
     const d = n % 10, h = n % 100;
     return n + ' ' + (d === 1 && h !== 11 ? one : d >= 2 && (h < 10 || h >= 20) ? few : many);
   }
+  const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');   // 25000 -> 25 000
 
   function start() {
     Sound.init(); Sound.resume(); Sound.whoosh();
     enterFullscreen();
     keepAwake(true);
 
-    S.photons.length = S.bursts.length = S.sparks.length = 0;
-    if (S.mode !== 'intro') S.parts.length = 0;
+    S.parts.length = S.photons.length = S.bursts.length = S.sparks.length = 0;
     S.mode = 'run';
-    S.nE = S.nP = N; S.nA = 0;
+    S.n0 = S.want.slice();
+    S.nE = S.n0[E]; S.nP = S.n0[P]; S.nA = 0;
     S.lastHit = S.t + 1.5;                         // let everything mix freely first
-    for (const kind of [E, P]) {
-      let have = 0;
-      for (const p of S.parts) if (p.kind === kind) have++;
-      for (let i = have; i < N; i++) spawn(kind, kind === E ? 0.03 : 0.58, kind === E ? 0.42 : 0.97, rand(0, 0.45));
-    }
-    for (const p of S.parts) setVelocity(p, rand(0, TAU));
+    SCALE = clamp(Math.sqrt(2 * N_DEFAULT / (S.nE + S.nP)), 0.55, 1);
+    applySize();
+    for (let i = 0; i < S.nE; i++) spawn(E, 0.03, 0.42, rand(0, 0.45));
+    for (let i = 0; i < S.nP; i++) spawn(P, 0.58, 0.97, rand(0, 0.45));
     updateHud(false);
     document.body.classList.add('live');
     $('intro').classList.remove('show');
@@ -746,14 +824,66 @@
 
   function finish() {
     S.mode = 'done';
-    $('rE').textContent = lt(S.nA, 'elektronas', 'elektronai', 'elektronų');
-    $('rP').textContent = lt(S.nA, 'pozitronas', 'pozitronai', 'pozitronų');
+    $('rE').textContent = lt(S.n0[E], 'elektronas', 'elektronai', 'elektronų');
+    $('rP').textContent = lt(S.n0[P], 'pozitronas', 'pozitronai', 'pozitronų');
     $('rA').textContent = lt(S.nA, 'anihiliacija', 'anihiliacijos', 'anihiliacijų');
     $('rG').textContent = lt(S.nA * 2, 'gama fotonas', 'gama fotonai', 'gama fotonų');
+    const left = $('rLeft');                       // unequal amounts: somebody is left without a partner
+    left.hidden = S.nE === S.nP;
+    if (S.nE > 0) left.textContent = 'Liko ' + lt(S.nE, 'elektronas', 'elektronai', 'elektronų') + ' – pritrūko pozitronų.';
+    if (S.nP > 0) left.textContent = 'Liko ' + lt(S.nP, 'pozitronas', 'pozitronai', 'pozitronų') + ' – pritrūko elektronų.';
+    // every annihilation used up one antimatter particle
+    $('rUsed').textContent = lt(S.nA, 'antimaterijos dalelę', 'antimaterijos daleles', 'antimaterijos dalelių');
+    $('rCost').textContent = thousands(S.nA * PRICE) + '\u00a0eurų';
     $('result').classList.add('show');
     Sound.chime();
     keepAwake(false);
   }
+
+  // Back to the start screen, where the amounts can be changed before the next run.
+  function toIntro() {
+    Sound.init(); Sound.resume();
+    S.mode = 'intro';
+    S.photons.length = S.bursts.length = S.sparks.length = 0;
+    SCALE = 1;
+    applySize();
+    seedIntro();
+    document.body.classList.remove('live');
+    $('result').classList.remove('show');
+    $('intro').classList.add('show');
+  }
+
+  // ---- amount pickers: tap to change by 5, hold to keep going
+  const wantEl = [$('wE'), $('wP')];
+  const steps = Array.from(document.querySelectorAll('.step'));
+  function showWant() {
+    wantEl[E].textContent = S.want[E]; wantEl[P].textContent = S.want[P];
+    for (const b of steps) {
+      const v = S.want[+b.dataset.kind];
+      b.disabled = +b.dataset.dir < 0 ? v <= N_MIN : v >= N_MAX;
+    }
+  }
+  function changeWant(kind, dir) {
+    const v = clamp(S.want[kind] + dir * N_STEP, N_MIN, N_MAX);
+    if (v === S.want[kind]) return false;
+    S.want[kind] = v;
+    showWant();
+    return true;
+  }
+  let holdTimer = 0, holdEvery = 0;
+  const stopHold = () => { clearTimeout(holdTimer); clearInterval(holdEvery); };
+  for (const b of steps) {
+    const kind = +b.dataset.kind, dir = +b.dataset.dir;
+    b.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      stopHold();
+      changeWant(kind, dir);
+      holdTimer = setTimeout(() => { holdEvery = setInterval(() => { if (!changeWant(kind, dir)) stopHold(); }, 130); }, 420);
+    });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, stopHold);
+    b.addEventListener('click', (e) => { if (e.detail === 0) changeWant(kind, dir); });   // keyboard
+  }
+  showWant();
 
   // ---- fullscreen, landscape and screen wake lock (all optional, all fail quietly)
   const root = document.documentElement;
@@ -807,7 +937,7 @@
     });
   }
   $('btnStart').addEventListener('click', start);
-  $('btnAgain').addEventListener('click', start);
+  $('btnAgain').addEventListener('click', toIntro);
 
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 150));

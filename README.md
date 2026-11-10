@@ -7,9 +7,17 @@ Skirta vaikams, pritaikyta planšetei (horizontaliai, per visą ekraną), visa l
 - 🔴 raudonos dalelės – pozitronai (antimaterija, e⁺)
 - 🟡 geltoni spinduliai – gama fotonai (γ)
 
-Paspaudus **PRADĖTI EKSPERIMENTĄ**, 25 elektronai ir 25 pozitronai pradeda judėti ekrane.
+Pradiniame ekrane pasirenkama, kiek materijos ir antimaterijos paleisti: iš pradžių po 25, mygtukais „−“ ir „+“
+galima keisti po 5, nuo 5 iki 100 (palaikius mygtuką skaičius keičiasi pats). Kai dalelių daugiau nei 50, jos
+piešiamos mažesnės, kad tilptų ekrane.
+
+Paspaudus **PRADĖTI EKSPERIMENTĄ**, elektronai ir pozitronai pradeda judėti ekrane.
 Susilietus elektronui ir pozitronui įvyksta anihiliacija: blyksnis, garsas ir du fotonai,
 išlekiantys tiksliai priešingomis kryptimis. Viršuje esantys skaitikliai rodo, kiek dalelių liko.
+
+Pabaigoje parodoma, kiek įvyko anihiliacijų, kiek dalelių liko be poros (jei kiekiai buvo nelygūs) ir
+„sąskaita“: viena sunaudota antimaterijos dalelė kainuoja 1000 eurų. **PAKARTOTI EKSPERIMENTĄ** grąžina į
+pradinį ekraną, kur kiekius galima pakeisti.
 
 ## Kaip paleisti
 
