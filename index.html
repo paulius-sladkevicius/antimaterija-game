@@ -174,7 +174,6 @@
   }
   .bill b { color: #ff8fa3; font-weight: 900; }
   .bill b.cost { color: var(--g); white-space: nowrap; text-shadow: 0 0 16px rgba(255, 214, 10, .45); }
-  .bill small { display: block; margin-top: .25em; font-size: .62em; font-weight: 600; color: #c7a5ad; }
   .actions {
     display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center;
     gap: clamp(10px, 2.2vmin, 22px); margin-top: clamp(12px, 3vmin, 28px);
@@ -203,7 +202,7 @@
     color: #fff3b0; text-shadow: 0 0 26px rgba(255, 196, 0, .6);
   }
   .tap { margin-top: 1.2em; font-size: clamp(12px, 2.2vmin, 19px); color: #93a0be; }
-  @media (max-height: 520px) { .note, .bill small { display: none; } .card { padding-top: 12px; padding-bottom: 12px; } }
+  @media (max-height: 520px) { .note { display: none; } .card { padding-top: 12px; padding-bottom: 12px; } }
   @media (max-height: 420px) {   /* very low screens (a phone held sideways): compact result card */
     #result { padding: 58px 2vw 6px; }
     .card { width: min(96vw, 900px); padding: 8px 14px; }
@@ -291,8 +290,7 @@
     <p class="left" id="rLeft" hidden></p>
     <p class="explain">Susidūrus elektronui ir pozitronui, jų energija gali virsti dviem gama fotonais.</p>
     <p class="note">Tai supaprastintas modelis. Tikrų gama fotonų akimis nematome – blyksnis, garsas ir geltoni spinduliai čia tik padeda įsivaizduoti, kas vyksta.</p>
-    <p class="bill">Sunaudojai <b id="rUsed">25 antimaterijos daleles</b>, todėl tau reikia sumokėti <b class="cost" id="rCost">25 000 eurų</b>!
-      <small>1 antimaterijos dalelė kainuoja 1000 eurų.</small></p>
+    <p class="bill">Sunaudojai <b id="rUsed">25 antimaterijos daleles</b>, todėl tau reikia sumokėti <b class="cost" id="rCost">25 000 eurų</b>!</p>
     <div class="actions">
       <button class="big" id="btnAgain" type="button">
         <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5v4.2h-4.2"/></svg>
