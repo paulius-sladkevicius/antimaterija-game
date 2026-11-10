@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<title>ANTIMATERIJA: DIDYSIS SUSIDŪRIMAS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="Interaktyvi materijos ir antimaterijos anihiliacijos simuliacija.">
+<meta name="theme-color" content="#03040a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --e: #35b8ff;      /* electrons  */
+    --p: #ff3b5c;      /* positrons  */
+    --g: #ffe600;      /* photons    */
+    --gold: #ffc400;
+    --ink: #eaf2ff;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #03040a; color: var(--ink); font-family: var(--font);
+    overscroll-behavior: none; touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---------- top bar: counters + sound / fullscreen ---------- */
+  #top {
+    position: fixed; z-index: 3; left: 0; right: 0; top: 0;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-right, 0px) + 12px)
+             0 calc(env(safe-area-inset-left, 0px) + 12px);
+    pointer-events: none;
+  }
+  #hud {
+    grid-column: 2; display: flex; align-items: center; gap: clamp(10px, 2.4vw, 34px);
+    padding: clamp(7px, 1.3vmin, 12px) clamp(12px, 2.4vw, 28px);
+    font-size: clamp(14px, 2.9vmin, 26px); font-weight: 700; white-space: nowrap;
+    background: rgba(8, 12, 30, .62); border: 1px solid rgba(150, 180, 255, .2);
+    border-radius: 999px; box-shadow: 0 4px 24px rgba(0, 0, 0, .45);
+    opacity: 0; transform: translateY(-140%); transition: opacity .4s, transform .5s cubic-bezier(.2, .9, .3, 1.2);
+  }
+  body.live #hud { opacity: 1; transform: none; }
+  .stat { display: flex; align-items: center; gap: .4em; }
+  .stat .lbl { opacity: .86; font-weight: 600; }
+  .stat b {
+    display: inline-block; min-width: 1.5em; text-align: left;
+    font-size: 1.22em; font-weight: 800; font-variant-numeric: tabular-nums;
+  }
+  .stat b.bump { animation: bump .35s ease-out; }
+  @keyframes bump { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+  .dot { width: .8em; height: .8em; border-radius: 50%; flex: none; }
+  .dot.e { background: radial-gradient(circle at 40% 35%, #e3f6ff, var(--e) 60%); box-shadow: 0 0 .6em var(--e); }
+  .dot.p { background: radial-gradient(circle at 40% 35%, #ffe6ea, var(--p) 60%); box-shadow: 0 0 .6em var(--p); }
+  .dot.g { background: radial-gradient(circle at 40% 35%, #fffde0, var(--g) 60%); box-shadow: 0 0 .6em var(--g); }
+  .stat svg { width: .95em; height: .95em; flex: none; fill: var(--g); filter: drop-shadow(0 0 .3em rgba(255, 214, 10, .8)); }
+  .stat.e b { color: #8fd8ff; } .stat.p b { color: #ff8fa3; } .stat.a b { color: #ffe97a; }
+
+  #tools { grid-column: 3; justify-self: end; display: flex; gap: 10px; pointer-events: auto; }
+  .tool {
+    width: clamp(46px, 7.4vmin, 60px); height: clamp(46px, 7.4vmin, 60px); border-radius: 50%;
+    display: grid; place-items: center; cursor: pointer; touch-action: manipulation;
+    color: var(--ink); background: rgba(8, 12, 30, .62); border: 1px solid rgba(150, 180, 255, .28);
+    transition: transform .12s, background .2s;
+  }
+  .tool:active { transform: scale(.9); background: rgba(40, 60, 120, .7); }
+  .tool svg { width: 56%; height: 56%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tool .fill { fill: currentColor; }
+  .tool[aria-pressed="false"] { color: #8b93a8; }
+  .tool .off, .tool[aria-pressed="false"] .on { display: none; }
+  .tool[aria-pressed="false"] .off { display: inline; }
+  .tool[hidden] { display: none; }
+
+  /* ---------- centred screens (start + result) ---------- */
+  .screen {
+    position: fixed; z-index: 2; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: clamp(60px, 11vmin, 90px) 4vw 3vh;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .45s ease, visibility 0s linear .45s;
+  }
+  .screen.show { opacity: 1; visibility: visible; transition: opacity .45s ease; }
+  .screen.show .big { pointer-events: auto; }
+
+  h1 { line-height: 1; margin-bottom: clamp(18px, 5vmin, 48px); }
+  h1 span {
+    display: block; font-size: clamp(30px, 10vmin, 104px); font-weight: 900; letter-spacing: .07em;
+    background: linear-gradient(90deg, var(--e) 5%, #ffffff 50%, var(--p) 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 22px rgba(120, 160, 255, .35));
+  }
+  h1 small {
+    display: block; margin-top: .7em; font-size: clamp(13px, 3vmin, 30px); font-weight: 700;
+    letter-spacing: .38em; margin-right: -.38em; color: #ffe97a;
+  }
+  .big {
+    display: inline-flex; align-items: center; justify-content: center; gap: .55em;
+    font: 900 clamp(19px, 3.7vmin, 38px)/1.1 var(--font); letter-spacing: .04em;
+    padding: .85em 1.5em; max-width: 92vw; border: 0; border-radius: 999px; cursor: pointer;
+    color: #1d1300; background: linear-gradient(180deg, #fff27a 0%, #ffd60a 45%, #ff9f0a 100%);
+    box-shadow: 0 0 0 4px rgba(255, 214, 10, .22), 0 0 44px rgba(255, 190, 10, .5), inset 0 -4px 0 rgba(140, 70, 0, .35);
+    touch-action: manipulation; transition: transform .12s;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .big:active { transform: scale(.95); }
+  .big svg { width: 1em; height: 1em; flex: none; fill: currentColor; }
+  .big svg.line { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 214, 10, .22), 0 0 34px rgba(255, 190, 10, .4), inset 0 -4px 0 rgba(140, 70, 0, .35); }
+    50%      { box-shadow: 0 0 0 9px rgba(255, 214, 10, .12), 0 0 60px rgba(255, 190, 10, .62), inset 0 -4px 0 rgba(140, 70, 0, .35); }
+  }
+  .q { margin-top: clamp(16px, 3.6vmin, 34px); font-size: clamp(16px, 3.1vmin, 30px); font-weight: 600; color: #cfe0ff; max-width: 30em; }
+  .legend {
+    list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: .5em 1.8em;
+    margin-top: clamp(18px, 5vmin, 54px); max-width: min(92vw, 30em); font-size: clamp(13px, 2.3vmin, 21px); font-weight: 600; color: #b7c4e2;
+  }
+  .legend li { display: flex; align-items: center; gap: .5em; }
+  .legend sup { font-size: .75em; line-height: 0; }
+  .rotate { display: none; margin-top: 1.4em; font-size: clamp(13px, 2.2vmin, 18px); color: #93a0be; }
+  @media (orientation: portrait) { .rotate { display: block; } }
+
+  .card {
+    width: min(92vw, 820px); padding: clamp(16px, 4vmin, 40px) clamp(16px, 4.5vmin, 48px);
+    background: rgba(6, 9, 24, .8); border: 1px solid rgba(255, 214, 10, .35); border-radius: clamp(18px, 4vmin, 36px);
+    box-shadow: 0 0 70px rgba(255, 196, 0, .16), 0 20px 60px rgba(0, 0, 0, .6);
+    transform: scale(.92); transition: transform .5s cubic-bezier(.2, .9, .3, 1.25);
+  }
+  .screen.show .card { transform: none; }
+  .card h2 {
+    font-size: clamp(22px, 6vmin, 56px); font-weight: 900; letter-spacing: .03em; line-height: 1.1;
+    margin-bottom: .45em; color: #fff3b0; text-shadow: 0 0 26px rgba(255, 196, 0, .6);
+  }
+  .line { font-size: clamp(18px, 4.3vmin, 40px); font-weight: 800; line-height: 1.4; }
+  .line .e { color: #6fcbff; } .line .p { color: #ff7088; }
+  .line.a { color: #ffffff; } .line.g { color: var(--g); text-shadow: 0 0 18px rgba(255, 214, 10, .45); }
+  .explain { margin: .9em auto 0; max-width: 27em; font-size: clamp(15px, 2.9vmin, 26px); font-weight: 600; line-height: 1.35; color: #d7e4ff; }
+  .note { margin: .7em auto 0; max-width: 40em; font-size: clamp(11px, 1.9vmin, 16px); line-height: 1.35; color: #8e9bb9; }
+  .card .big { margin-top: clamp(14px, 3.6vmin, 34px); }
+  @media (max-height: 430px) { .note { display: none; } }
+  @media (max-width: 900px) { #hud { font-size: clamp(13px, 2.1vw, 20px); gap: clamp(10px, 1.8vw, 20px); padding: 8px 16px; } }
+  @media (max-width: 640px) {
+    #hud { gap: 12px; padding: 7px 12px; }
+    .stat .lbl { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .big { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="fx"></canvas>
+
+<header id="top">
+  <div id="hud" role="status">
+    <div class="stat e"><i class="dot e"></i><span class="lbl">Materija:</span><b id="cE">25</b></div>
+    <div class="stat p"><i class="dot p"></i><span class="lbl">Antimaterija:</span><b id="cP">25</b></div>
+    <div class="stat a"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 1 4 14h6.2L8.5 23 20 9.5h-6.6z"/></svg><span class="lbl">Anihiliacijos:</span><b id="cA">0</b></div>
+  </div>
+  <div id="tools">
+    <button class="tool" id="btnSound" type="button" aria-pressed="true" aria-label="Garsas įjungtas">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path class="fill" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
+        <path class="on" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/>
+        <path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/>
+      </svg>
+    </button>
+    <button class="tool" id="btnFs" type="button" aria-label="Visas ekranas" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+    </button>
+  </div>
+</header>
+
+<section class="screen show" id="intro">
+  <h1><span>ANTIMATERIJA</span><small>DIDYSIS SUSIDŪRIMAS</small></h1>
+  <button class="big" id="btnStart" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5z"/></svg>
+    PRADĖTI EKSPERIMENTĄ
+  </button>
+  <p class="q">Kas nutiks, kai materija susitiks su antimaterija?</p>
+  <ul class="legend">
+    <li><i class="dot e"></i><span>Elektronai (materija, e<sup>−</sup>)</span></li>
+    <li><i class="dot p"></i><span>Pozitronai (antimaterija, e<sup>+</sup>)</span></li>
+    <li><i class="dot g"></i><span>Gama fotonai (γ)</span></li>
+  </ul>
+  <p class="rotate">Geriausia žiūrėti pasukus planšetę horizontaliai.</p>
+</section>
+
+<section class="screen" id="result" aria-live="polite">
+  <div class="card">
+    <h2>EKSPERIMENTAS BAIGTAS!</h2>
+    <p class="line"><span class="e" id="rE">25 elektronai</span> + <span class="p" id="rP">25 pozitronai</span></p>
+    <p class="line a" id="rA">25 anihiliacijos</p>
+    <p class="line g" id="rG">50 gama fotonų</p>
+    <p class="explain">Susidūrus elektronui ir pozitronui, jų energija gali virsti dviem gama fotonais.</p>
+    <p class="note">Tai supaprastintas modelis. Tikrų gama fotonų akimis nematome – blyksnis, garsas ir geltoni spinduliai čia tik padeda įsivaizduoti, kas vyksta.</p>
+    <button class="big" id="btnAgain" type="button">
+      <svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5v4.2h-4.2"/></svg>
+      PAKARTOTI EKSPERIMENTĄ
+    </button>
+  </div>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  // ------------------------------------------------------------------ setup
+  const N = 25;                       // particles of each kind
+  const INTRO_N = 7;                  // particles drifting on each side of the start screen
+  const INTRO_EDGE = 0.2;             // ...and the share of the screen width each side gets
+  const TAU = Math.PI * 2;
+  const E = 0, P = 1;                 // electron / positron
+  const BURST_LIFE = 0.95;            // seconds one annihilation stays on screen
+  const TRAIL_LEN = 12;
+
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+  const easeBack = (p) => { const c = 1.70158; const q = p - 1; return 1 + (c + 1) * q * q * q + c * q * q; };
+
+  const bg = $('bg'), cv = $('fx');
+  const bctx = bg.getContext('2d', { alpha: false });
+  const ctx = cv.getContext('2d');
+
+  let W = 0, H = 0, DPR = 1;
+  let R = 10;                         // particle radius (css px)
+  let SPEED = 120;                    // particle speed (css px / s)
+  let PH_SPEED = 1500, PH_TAIL = 300; // photon speed and trail length
+  const spr = {};                     // pre-rendered glow sprites
+
+  const S = {
+    mode: 'intro',                    // intro | run | done
+    t: 0,                             // simulation clock, seconds
+    lastHit: 0,                       // time of the latest annihilation
+    parts: [], photons: [], bursts: [], sparks: [], stars: [],
+    nE: N, nP: N, nA: 0,
+  };
+
+  // ------------------------------------------------------------------ sound
+  // Everything is synthesised with Web Audio, so no audio files are needed.
+  const Sound = {
+    ctx: null, master: null, noise: null, enabled: true, last: -1,
+
+    init() {
+      if (this.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        const ac = this.ctx = new AC();
+        const comp = ac.createDynamicsCompressor();   // keeps overlapping sounds from getting loud
+        comp.threshold.value = -18; comp.ratio.value = 8;
+        this.master = ac.createGain();
+        this.master.gain.value = this.enabled ? 0.5 : 0;
+        this.master.connect(comp); comp.connect(ac.destination);
+        const len = Math.floor(ac.sampleRate * 0.4);
+        this.noise = ac.createBuffer(1, len, ac.sampleRate);
+        const d = this.noise.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      } catch (e) { this.ctx = null; }
+    },
+    resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); },
+    suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); },
+    setEnabled(on) {
+      this.enabled = on;
+      if (this.ctx) this.master.gain.setTargetAtTime(on ? 0.5 : 0, this.ctx.currentTime, 0.02);
+    },
+    out(pan) {
+      const ac = this.ctx;
+      if (!ac.createStereoPanner) return this.master;
+      const p = ac.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); p.connect(this.master);
+      return p;
+    },
+    tone(dest, type, f0, f1, t, dur, vol) {
+      const ac = this.ctx, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(dest);
+      o.start(t); o.stop(t + dur + 0.02);
+    },
+    // Short "puff" / energy discharge. Every call is pitched a little differently.
+    puff(pan) {
+      const ac = this.ctx;
+      if (!ac || !this.enabled || ac.state !== 'running') return;
+      const t = ac.currentTime, gap = t - this.last;
+      if (gap < 0.045) return;                        // two hits in the same instant: one sound is enough
+      this.last = t;
+      const vol = gap < 0.3 ? 0.55 : 1;               // quieter when reactions come in quick succession
+      const f = rand(340, 640), dest = this.out(pan * 0.7);
+      this.tone(dest, 'sine', f, f * 0.2, t, 0.26, 0.5 * vol);
+      this.tone(dest, 'triangle', f * 3, f * 5.5, t, 0.11, 0.07 * vol);
+      const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = this.noise;
+      bp.type = 'bandpass'; bp.Q.value = 1.1;
+      bp.frequency.setValueAtTime(rand(2000, 3200), t);
+      bp.frequency.exponentialRampToValueAtTime(420, t + 0.22);
+      g.gain.setValueAtTime(0.34 * vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+      src.connect(bp); bp.connect(g); g.connect(dest);
+      src.start(t, rand(0, 0.1), 0.26);
+    },
+    whoosh() {
+      const ac = this.ctx;
+      if (!ac || !this.enabled) return;
+      const t = ac.currentTime + 0.02;
+      this.tone(this.master, 'sine', 180, 720, t, 0.4, 0.16);
+      this.tone(this.master, 'triangle', 360, 1440, t, 0.4, 0.05);
+    },
+    chime() {
+      const ac = this.ctx;
+      if (!ac || !this.enabled) return;
+      const t = ac.currentTime + 0.05;
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        this.tone(this.master, 'sine', f, f, t + i * 0.13, 0.7, 0.14);
+        this.tone(this.master, 'triangle', f * 2, f * 2, t + i * 0.13, 0.35, 0.03);
+      });
+    },
+  };
+
+  // ------------------------------------------------------------------ sprites
+  function glow(radius, stops, symbol) {
+    const size = Math.max(4, Math.ceil(radius * 2 * DPR));
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d'), m = size / 2;
+    const grad = g.createRadialGradient(m, m, 0, m, m, m);
+    for (const [o, col] of stops) grad.addColorStop(o, col);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, size, size);
+    if (symbol) {                                   // "−" on electrons, "+" on positrons
+      const l = R * 0.52 * DPR;
+      g.strokeStyle = 'rgba(2, 8, 30, .82)';
+      g.lineWidth = Math.max(1.5, R * 0.3 * DPR);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(m - l, m); g.lineTo(m + l, m);
+      if (symbol === '+') { g.moveTo(m, m - l); g.lineTo(m, m + l); }
+      g.stroke();
+    }
+    return c;
+  }
+
+  function buildSprites() {
+    const k = 1 / 3.2;                              // core radius as a fraction of the sprite radius
+    spr.body = [
+      glow(R * 3.2, [[0, '#f2fbff'], [k * 0.55, '#8fdcff'], [k, '#1fa8ff'], [k + 0.03, 'rgba(31,160,255,.5)'], [0.6, 'rgba(20,120,255,.13)'], [1, 'rgba(20,120,255,0)']], '-'),
+      glow(R * 3.2, [[0, '#fff4f5'], [k * 0.55, '#ff9aa8'], [k, '#ff2d55'], [k + 0.03, 'rgba(255,45,85,.5)'], [0.6, 'rgba(255,30,60,.13)'], [1, 'rgba(255,30,60,0)']], '+'),
+    ];
+    spr.trail = [
+      glow(R * 1.5, [[0, 'rgba(60,180,255,.9)'], [0.5, 'rgba(30,140,255,.35)'], [1, 'rgba(30,140,255,0)']]),
+      glow(R * 1.5, [[0, 'rgba(255,70,100,.9)'], [0.5, 'rgba(255,40,80,.35)'], [1, 'rgba(255,40,80,0)']]),
+    ];
+    spr.flash = glow(64, [[0, 'rgba(255,255,255,1)'], [0.18, 'rgba(255,250,215,.95)'], [0.42, 'rgba(255,205,70,.5)'], [0.75, 'rgba(255,150,20,.12)'], [1, 'rgba(255,140,0,0)']]);
+    spr.photon = glow(R * 2.6, [[0, 'rgba(255,255,255,1)'], [0.22, 'rgba(255,246,150,.95)'], [0.5, 'rgba(255,214,10,.4)'], [1, 'rgba(255,190,0,0)']]);
+    spr.spark = glow(R * 0.9, [[0, 'rgba(255,255,240,1)'], [0.35, 'rgba(255,220,90,.8)'], [1, 'rgba(255,170,0,0)']]);
+
+    // "ANIHILIACIJA!" label, rendered once and then just scaled / faded
+    const fs = clamp(Math.min(W, H) * 0.04, 17, 34);
+    const font = `900 ${fs * DPR}px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif`;
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    g.font = font;
+    const tw = g.measureText('ANIHILIACIJA!').width, pad = fs * 0.5 * DPR;
+    c.width = Math.ceil(tw + pad * 2); c.height = Math.ceil(fs * 1.5 * DPR + pad);
+    g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    g.lineWidth = fs * 0.22 * DPR; g.strokeStyle = 'rgba(30, 14, 0, .85)';
+    g.strokeText('ANIHILIACIJA!', c.width / 2, c.height / 2);
+    const grad = g.createLinearGradient(0, c.height * 0.2, 0, c.height * 0.8);
+    grad.addColorStop(0, '#fffde6'); grad.addColorStop(1, '#ffc400');
+    g.fillStyle = grad;
+    g.fillText('ANIHILIACIJA!', c.width / 2, c.height / 2);
+    spr.label = c; spr.labelW = c.width / DPR; spr.labelH = c.height / DPR;
+  }
+
+  // ------------------------------------------------------------------ background
+  function drawBackground() {
+    const g = bctx, big = Math.max(W, H);
+    g.fillStyle = '#03040a';
+    g.fillRect(0, 0, W, H);
+    const blob = (x, y, r, col) => {
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    };
+    blob(W * 0.14, H * 0.58, big * 0.55, 'rgba(24, 84, 210, .17)');   // matter side
+    blob(W * 0.86, H * 0.42, big * 0.55, 'rgba(210, 30, 64, .14)');   // antimatter side
+    blob(W * 0.5, H * 0.5, big * 0.4, 'rgba(90, 60, 170, .08)');
+
+    // faint detector rings: a hint of a particle laboratory
+    g.lineWidth = 1;
+    for (let i = 1; i <= 4; i++) {
+      g.strokeStyle = `rgba(140, 170, 255, ${0.07 - i * 0.012})`;
+      g.beginPath(); g.arc(W / 2, H / 2, Math.min(W, H) * 0.17 * i, 0, TAU); g.stroke();
+    }
+    const count = Math.round(clamp(W * H / 4200, 90, 420));
+    for (let i = 0; i < count; i++) {
+      const r = Math.random() < 0.08 ? rand(1, 1.6) : rand(0.35, 1);
+      const tint = Math.random();
+      g.fillStyle = tint < 0.15 ? `rgba(160,200,255,${rand(0.3, 0.9)})`
+                  : tint < 0.27 ? `rgba(255,205,190,${rand(0.3, 0.8)})`
+                  : `rgba(255,255,255,${rand(0.15, 0.8)})`;
+      g.beginPath(); g.arc(Math.random() * W, Math.random() * H, r, 0, TAU); g.fill();
+    }
+    const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, big * 0.75);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.55)');
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+  }
+
+  function resize() {
+    const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
+    if (w === W && h === H) return;
+    const sx = W ? w / W : 1, sy = H ? h / H : 1;
+    W = w; H = h;
+    DPR = Math.min(window.devicePixelRatio || 1, 2);   // enough for a sharp picture, light on the GPU
+    for (const c of [bg, cv]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); }
+    bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    const unit = Math.min(W, H);
+    R = clamp(unit * 0.0155, 6, 14);
+    SPEED = clamp(unit * 0.16, 70, 180);
+    PH_SPEED = Math.max(W, H) * 1.45;
+    PH_TAIL = Math.max(W, H) * 0.3;
+
+    for (const p of S.parts) { p.x *= sx; p.y *= sy; p.trail.length = 0; setVelocity(p, Math.atan2(p.vy, p.vx)); }
+    for (const list of [S.bursts, S.sparks]) for (const o of list) { o.x *= sx; o.y *= sy; }
+    for (const ph of S.photons) { ph.x0 *= sx; ph.y0 *= sy; }
+    buildSprites();
+    drawBackground();
+  }
+
+  // ------------------------------------------------------------------ particles
+  function setVelocity(p, angle) {
+    p.speed = SPEED * p.k * (S.mode === 'intro' ? 0.38 : 1);
+    p.vx = Math.cos(angle) * p.speed;
+    p.vy = Math.sin(angle) * p.speed;
+  }
+
+  // Place a new particle on its own side of the screen, away from the others.
+  function spawn(kind, x0, x1, delay) {
+    const m = R * 2, top = Math.max(m, H * 0.15);
+    let x = 0, y = 0;
+    for (let tries = 0; tries < 60; tries++) {
+      x = rand(Math.max(m, W * x0), Math.min(W - m, W * x1));
+      y = rand(top, H - m);
+      let free = true;
+      for (const q of S.parts) {
+        const dx = q.x - x, dy = q.y - y;
+        if (dx * dx + dy * dy < R * R * 9) { free = false; break; }
+      }
+      if (free) break;
+    }
+    const p = { kind, x, y, vx: 0, vy: 0, speed: 0, k: rand(0.85, 1.15), born: S.t + delay, trail: [], dead: false };
+    setVelocity(p, rand(0, TAU));
+    S.parts.push(p);
+  }
+
+  function seedIntro() {
+    S.parts.length = 0;
+    for (let i = 0; i < INTRO_N; i++) { spawn(E, 0.03, INTRO_EDGE - 0.02, i * 0.08); spawn(P, 1.02 - INTRO_EDGE, 0.97, i * 0.08); }
+  }
+
+  // Opposite charges attract. The pull only wakes up when nothing has happened for a moment,
+  // so the last few particles always find each other instead of wandering forever.
+  function steer(dt) {
+    const lull = S.t - S.lastHit - 1.2;
+    if (lull <= 0) return;
+    const maxTurn = Math.min(14, 0.5 * lull + 0.3 * lull * lull) * dt;
+    const ps = S.parts;
+    for (const p of ps) {
+      let best = Infinity, tx = 0, ty = 0;
+      for (const q of ps) {
+        if (q.kind === p.kind) continue;
+        const dx = q.x - p.x, dy = q.y - p.y, d2 = dx * dx + dy * dy;
+        if (d2 < best) { best = d2; tx = dx; ty = dy; }
+      }
+      if (best === Infinity) continue;
+      const cur = Math.atan2(p.vy, p.vx);
+      let diff = Math.atan2(ty, tx) - cur;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      const a = cur + clamp(diff, -maxTurn, maxTurn);
+      p.vx = Math.cos(a) * p.speed; p.vy = Math.sin(a) * p.speed;
+    }
+  }
+
+  function moveParticles(dt) {
+    const intro = S.mode === 'intro';
+    const step = R * 0.5, step2 = step * step;
+    for (const p of S.parts) {
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      // on the start screen each kind stays on its own side
+      const x0 = intro && p.kind === P ? W * (1 - INTRO_EDGE) : R;
+      const x1 = intro && p.kind === E ? W * INTRO_EDGE : W - R;
+      if (p.x < x0) { p.x = x0; p.vx = Math.abs(p.vx); } else if (p.x > x1) { p.x = x1; p.vx = -Math.abs(p.vx); }
+      if (p.y < R) { p.y = R; p.vy = Math.abs(p.vy); } else if (p.y > H - R) { p.y = H - R; p.vy = -Math.abs(p.vy); }
+
+      const tr = p.trail, h = tr[0];
+      if (!h) tr.unshift({ x: p.x, y: p.y });
+      else {
+        const dx = p.x - h.x, dy = p.y - h.y;
+        if (dx * dx + dy * dy >= step2) {
+          const pt = tr.length >= TRAIL_LEN ? tr.pop() : {};
+          pt.x = p.x; pt.y = p.y; tr.unshift(pt);
+        }
+      }
+    }
+  }
+
+  function collide() {
+    const ps = S.parts, n = ps.length, touch = R * 2, touch2 = touch * touch;
+    let hit = false;
+    for (let i = 0; i < n; i++) {
+      const a = ps[i];
+      if (a.dead) continue;
+      for (let j = i + 1; j < n; j++) {
+        const b = ps[j];
+        if (b.dead) continue;
+        const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+        if (d2 >= touch2) continue;
+        if (a.kind !== b.kind) {                    // matter meets antimatter
+          if (S.mode !== 'run') continue;
+          annihilate(a, b); hit = true;
+          break;
+        }
+        // same kind: bounce off each other like billiard balls
+        const d = Math.sqrt(d2) || 0.001, nx = dx / d, ny = dy / d;
+        const vn = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+        if (vn > 0) {
+          a.vx -= vn * nx; a.vy -= vn * ny; b.vx += vn * nx; b.vy += vn * ny;
+          for (const p of [a, b]) {                 // keep everybody at their own steady speed
+            const s = Math.hypot(p.vx, p.vy);
+            if (s > 0.001) { p.vx *= p.speed / s; p.vy *= p.speed / s; }
+          }
+        }
+        const push = (touch - d) / 2;
+        a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+      }
+    }
+    if (hit) S.parts = ps.filter((p) => !p.dead);
+  }
+
+  // e⁻ + e⁺ → γ + γ
+  function annihilate(a, b) {
+    a.dead = b.dead = true;
+    const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2;
+    S.nE--; S.nP--; S.nA++;
+    S.lastHit = S.t;
+    updateHud(true);
+
+    S.bursts.push({ x, y, t0: S.t, ax: a.x, ay: a.y, ak: a.kind, bx: b.x, by: b.y, bk: b.kind });
+
+    // two photons, exactly back to back (total momentum is zero)
+    const ang = rand(0, TAU), dx = Math.cos(ang), dy = Math.sin(ang);
+    S.photons.push({ x0: x, y0: y, dx, dy, d: 0 }, { x0: x, y0: y, dx: -dx, dy: -dy, d: 0 });
+
+    const u = Math.min(W, H) / 800;
+    for (let i = 0; i < 12; i++) {
+      const sa = rand(0, TAU), sv = rand(110, 430) * u, life = rand(0.35, 0.7);
+      S.sparks.push({ x, y, vx: Math.cos(sa) * sv, vy: Math.sin(sa) * sv, life, max: life, size: rand(0.7, 1.5) });
+    }
+    Sound.puff((x / W) * 2 - 1);
+  }
+
+  function update(dt) {
+    S.t += dt;
+    if (S.mode === 'run') steer(dt);
+    moveParticles(dt);
+    collide();
+
+    const m = PH_TAIL * 0.1;
+    for (let i = S.photons.length - 1; i >= 0; i--) {
+      const ph = S.photons[i];
+      ph.d += PH_SPEED * dt;
+      const tail = Math.max(0, ph.d - PH_TAIL), tx = ph.x0 + ph.dx * tail, ty = ph.y0 + ph.dy * tail;
+      if (tx < -m || tx > W + m || ty < -m || ty > H + m) S.photons.splice(i, 1);
+    }
+    const drag = Math.exp(-4 * dt);
+    for (let i = S.sparks.length - 1; i >= 0; i--) {
+      const s = S.sparks[i];
+      s.life -= dt;
+      if (s.life <= 0) { S.sparks.splice(i, 1); continue; }
+      s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= drag; s.vy *= drag;
+    }
+    while (S.bursts.length && S.t - S.bursts[0].t0 > BURST_LIFE) S.bursts.shift();
+
+    // done as soon as no opposite pair is left and the last flash has faded
+    if (S.mode === 'run' && (S.nE === 0 || S.nP === 0) && !S.photons.length && !S.bursts.length) finish();
+  }
+
+  // ------------------------------------------------------------------ rendering
+  function put(img, x, y, r, alpha) {
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(img, x - r, y - r, r * 2, r * 2);
+  }
+
+  function render() {
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, W, H);
+
+    // twinkling stars
+    ctx.fillStyle = '#ffffff';
+    for (const s of S.stars) {
+      const tw = Math.sin(S.t * s.w + s.ph);
+      ctx.globalAlpha = 0.12 + 0.6 * tw * tw;
+      ctx.fillRect(s.x * W, s.y * H, s.r, s.r);
+    }
+
+    // particle trails (additive glow)
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of S.parts) {
+      const tr = p.trail, n = tr.length, img = spr.trail[p.kind];
+      if (S.t < p.born) continue;
+      for (let i = 1; i < n; i++) {
+        const f = 1 - i / TRAIL_LEN;
+        put(img, tr[i].x, tr[i].y, R * (0.55 + 0.85 * f), 0.34 * f * f);
+      }
+    }
+
+    // particles
+    ctx.globalCompositeOperation = 'source-over';
+    for (const p of S.parts) {
+      const age = (S.t - p.born) / 0.4;
+      if (age <= 0) continue;
+      put(spr.body[p.kind], p.x, p.y, R * 3.2 * (age < 1 ? easeBack(age) : 1), 1);
+    }
+
+    // gamma photons: bright head with a glowing trail
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (const ph of S.photons) {
+      const hx = ph.x0 + ph.dx * ph.d, hy = ph.y0 + ph.dy * ph.d;
+      const tl = Math.min(ph.d, PH_TAIL), tx = hx - ph.dx * tl, ty = hy - ph.dy * tl;
+      if (tl > 2) {
+        ctx.globalAlpha = 1;
+        let g = ctx.createLinearGradient(tx, ty, hx, hy);
+        g.addColorStop(0, 'rgba(255,190,0,0)'); g.addColorStop(0.55, 'rgba(255,214,10,.3)'); g.addColorStop(1, 'rgba(255,236,90,.85)');
+        ctx.strokeStyle = g; ctx.lineWidth = R * 0.95;
+        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+        g = ctx.createLinearGradient(tx, ty, hx, hy);
+        g.addColorStop(0, 'rgba(255,255,220,0)'); g.addColorStop(1, 'rgba(255,255,235,1)');
+        ctx.strokeStyle = g; ctx.lineWidth = Math.max(1.5, R * 0.3);
+        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+      }
+      put(spr.photon, hx, hy, R * 2.6, 1);
+    }
+
+    // annihilation: particles stop and vanish, flash + expanding ring
+    for (const b of S.bursts) {
+      const age = S.t - b.t0;
+      if (age < 0.15) {
+        const p = age / 0.15, s = 1 - p;
+        ctx.globalCompositeOperation = 'source-over';
+        put(spr.body[b.ak], b.ax + (b.x - b.ax) * p, b.ay + (b.y - b.ay) * p, R * 3.2 * (0.35 + 0.65 * s), s);
+        put(spr.body[b.bk], b.bx + (b.x - b.bx) * p, b.by + (b.y - b.by) * p, R * 3.2 * (0.35 + 0.65 * s), s);
+        ctx.globalCompositeOperation = 'lighter';
+      }
+      if (age < 0.42) {
+        const p = age / 0.42;
+        put(spr.flash, b.x, b.y, R * (4 + 9 * easeOut(p)), 0.88 * Math.pow(1 - p, 1.4));
+      }
+      if (age < 0.62) {
+        const p = age / 0.62, e = easeOut(p);
+        ctx.globalAlpha = 0.75 * (1 - p);
+        ctx.strokeStyle = '#ffe9a8';
+        ctx.lineWidth = 1 + R * 0.45 * (1 - p);
+        ctx.beginPath(); ctx.arc(b.x, b.y, R * (1.5 + 9.5 * e), 0, TAU); ctx.stroke();
+      }
+    }
+    for (const s of S.sparks) {
+      const f = s.life / s.max;
+      put(spr.spark, s.x, s.y, R * 0.9 * s.size * (0.4 + 0.6 * f), f);
+    }
+
+    // "ANIHILIACIJA!" labels on top of everything
+    ctx.globalCompositeOperation = 'source-over';
+    for (const b of S.bursts) {
+      const age = S.t - b.t0 - 0.06;
+      if (age <= 0) continue;
+      const life = BURST_LIFE - 0.06, p = age / life;
+      const alpha = Math.min(1, age / 0.08, (life - age) / 0.3);
+      const sc = age < 0.2 ? 0.55 + 0.45 * easeBack(age / 0.2) : 1;
+      const w = spr.labelW * sc, h = spr.labelH * sc;
+      const above = b.y - R * 5.2 - h / 2 > H * 0.11;       // keep clear of the counters
+      const cx = clamp(b.x, w / 2 + 6, W - w / 2 - 6);
+      const cy = above ? b.y - R * 5.2 - R * 1.2 * p : b.y + R * 5.2 + R * 1.2 * p;
+      ctx.globalAlpha = clamp(alpha, 0, 1);
+      ctx.drawImage(spr.label, cx - w / 2, cy - h / 2, w, h);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  let lastNow = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = clamp((now - lastNow) / 1000, 0, 0.05);
+    lastNow = now;
+    update(dt);
+    render();
+  }
+
+  // ------------------------------------------------------------------ UI
+  const elE = $('cE'), elP = $('cP'), elA = $('cA');
+  function updateHud(bump) {
+    elE.textContent = S.nE; elP.textContent = S.nP; elA.textContent = S.nA;
+    if (!bump) return;
+    for (const el of [elE, elP, elA]) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  }
+
+  // Lithuanian plural forms: 1 elektronas, 2 elektronai, 10 elektronų
+  function lt(n, one, few, many) {
+    const d = n % 10, h = n % 100;
+    return n + ' ' + (d === 1 && h !== 11 ? one : d >= 2 && (h < 10 || h >= 20) ? few : many);
+  }
+
+  function start() {
+    Sound.init(); Sound.resume(); Sound.whoosh();
+    enterFullscreen();
+    keepAwake(true);
+
+    S.photons.length = S.bursts.length = S.sparks.length = 0;
+    if (S.mode !== 'intro') S.parts.length = 0;
+    S.mode = 'run';
+    S.nE = S.nP = N; S.nA = 0;
+    S.lastHit = S.t + 1.5;                         // let everything mix freely first
+    for (const kind of [E, P]) {
+      let have = 0;
+      for (const p of S.parts) if (p.kind === kind) have++;
+      for (let i = have; i < N; i++) spawn(kind, kind === E ? 0.03 : 0.58, kind === E ? 0.42 : 0.97, rand(0, 0.45));
+    }
+    for (const p of S.parts) setVelocity(p, rand(0, TAU));
+    updateHud(false);
+    document.body.classList.add('live');
+    $('intro').classList.remove('show');
+    $('result').classList.remove('show');
+  }
+
+  function finish() {
+    S.mode = 'done';
+    $('rE').textContent = lt(S.nA, 'elektronas', 'elektronai', 'elektronų');
+    $('rP').textContent = lt(S.nA, 'pozitronas', 'pozitronai', 'pozitronų');
+    $('rA').textContent = lt(S.nA, 'anihiliacija', 'anihiliacijos', 'anihiliacijų');
+    $('rG').textContent = lt(S.nA * 2, 'gama fotonas', 'gama fotonai', 'gama fotonų');
+    $('result').classList.add('show');
+    Sound.chime();
+    keepAwake(false);
+  }
+
+  // ---- fullscreen, landscape and screen wake lock (all optional, all fail quietly)
+  const root = document.documentElement;
+  const fsRequest = root.requestFullscreen || root.webkitRequestFullscreen;
+  const fsExit = document.exitFullscreen || document.webkitExitFullscreen;
+  const isFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const standalone = () => window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+
+  function enterFullscreen() {
+    if (!fsRequest || isFullscreen() || standalone()) return;
+    try {
+      const p = fsRequest.call(root, { navigationUI: 'hide' });
+      if (p && p.then) p.then(lockLandscape).catch(() => {});
+    } catch (e) { /* not allowed here: the game still works in the window */ }
+  }
+  function lockLandscape() {
+    try {
+      const o = screen.orientation;
+      if (o && o.lock) o.lock('landscape').catch(() => {});
+    } catch (e) { /* unsupported */ }
+  }
+  let wake = null;
+  function keepAwake(on) {
+    try {
+      if (on && navigator.wakeLock && !wake) {
+        navigator.wakeLock.request('screen').then((w) => {
+          wake = w; w.addEventListener('release', () => { wake = null; });
+        }).catch(() => {});
+      } else if (!on && wake) { wake.release().catch(() => {}); wake = null; }
+    } catch (e) { /* unsupported */ }
+  }
+
+  const btnSound = $('btnSound'), btnFs = $('btnFs');
+  function showSound() {
+    btnSound.setAttribute('aria-pressed', String(Sound.enabled));
+    btnSound.setAttribute('aria-label', Sound.enabled ? 'Garsas įjungtas' : 'Garsas išjungtas');
+  }
+  try { Sound.enabled = localStorage.getItem('antimaterija.garsas') !== '0'; } catch (e) { /* private mode */ }
+  showSound();
+  btnSound.addEventListener('click', () => {
+    Sound.setEnabled(!Sound.enabled);
+    if (Sound.enabled) { Sound.init(); Sound.resume(); }
+    showSound();
+    try { localStorage.setItem('antimaterija.garsas', Sound.enabled ? '1' : '0'); } catch (e) { /* ignore */ }
+  });
+
+  if (fsRequest && fsExit && !standalone()) {
+    btnFs.hidden = false;
+    btnFs.addEventListener('click', () => {
+      if (isFullscreen()) { try { fsExit.call(document); } catch (e) { /* ignore */ } } else enterFullscreen();
+    });
+  }
+  $('btnStart').addEventListener('click', start);
+  $('btnAgain').addEventListener('click', start);
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) Sound.suspend();
+    else { Sound.resume(); if (S.mode === 'run') keepAwake(true); }
+  });
+
+  // ------------------------------------------------------------------ go
+  for (let i = 0; i < 46; i++) {
+    S.stars.push({ x: Math.random(), y: Math.random(), r: rand(1, 2.2), w: rand(0.6, 2.2), ph: rand(0, TAU) });
+  }
+  resize();
+  seedIntro();
+  requestAnimationFrame(frame);
+
+  // offline support when the game is served from a web address
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+})();
+</script>
+</body>
+</html>
