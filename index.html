@@ -482,7 +482,7 @@
   };
 
   // ------------------------------------------------------------------ sprites
-  function glow(radius, stops, symbol) {
+  function glow(radius, stops) {
     const size = Math.max(4, Math.ceil(radius * 2 * DPR));
     const c = document.createElement('canvas');
     c.width = c.height = size;
@@ -491,24 +491,14 @@
     for (const [o, col] of stops) grad.addColorStop(o, col);
     g.fillStyle = grad;
     g.fillRect(0, 0, size, size);
-    if (symbol) {                                   // "−" on electrons, "+" on positrons
-      const l = R * 0.52 * DPR;
-      g.strokeStyle = 'rgba(2, 8, 30, .82)';
-      g.lineWidth = Math.max(1.5, R * 0.3 * DPR);
-      g.lineCap = 'round';
-      g.beginPath();
-      g.moveTo(m - l, m); g.lineTo(m + l, m);
-      if (symbol === '+') { g.moveTo(m, m - l); g.lineTo(m, m + l); }
-      g.stroke();
-    }
     return c;
   }
 
   function buildSprites() {
     const k = 1 / 3.2;                              // core radius as a fraction of the sprite radius
     spr.body = [
-      glow(R * 3.2, [[0, '#f2fbff'], [k * 0.55, '#8fdcff'], [k, '#1fa8ff'], [k + 0.03, 'rgba(31,160,255,.5)'], [0.6, 'rgba(20,120,255,.13)'], [1, 'rgba(20,120,255,0)']], '-'),
-      glow(R * 3.2, [[0, '#fff4f5'], [k * 0.55, '#ff9aa8'], [k, '#ff2d55'], [k + 0.03, 'rgba(255,45,85,.5)'], [0.6, 'rgba(255,30,60,.13)'], [1, 'rgba(255,30,60,0)']], '+'),
+      glow(R * 3.2, [[0, '#f2fbff'], [k * 0.55, '#8fdcff'], [k, '#1fa8ff'], [k + 0.03, 'rgba(31,160,255,.5)'], [0.6, 'rgba(20,120,255,.13)'], [1, 'rgba(20,120,255,0)']]),
+      glow(R * 3.2, [[0, '#fff4f5'], [k * 0.55, '#ff9aa8'], [k, '#ff2d55'], [k + 0.03, 'rgba(255,45,85,.5)'], [0.6, 'rgba(255,30,60,.13)'], [1, 'rgba(255,30,60,0)']]),
     ];
     spr.trail = [
       glow(R * 1.5, [[0, 'rgba(60,180,255,.9)'], [0.5, 'rgba(30,140,255,.35)'], [1, 'rgba(30,140,255,0)']]),

@@ -1,6 +1,6 @@
 // Offline cache for ANTIMATERIJA: DIDYSIS SUSIDŪRIMAS.
 // Bump the version whenever a cached file changes.
-const CACHE = 'antimaterija-v5';
+const CACHE = 'antimaterija-v6';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (event) => {
